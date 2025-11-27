@@ -1,43 +1,179 @@
-import axios from 'axios'
+/**
+ * API utility functions for GeoSense frontend
+ * Connects to Flask backend at localhost:5000
+ */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
+/**
+ * Generic fetch wrapper with error handling
+ */
+async function fetchAPI(endpoint, options = {}) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API Error (${endpoint}):`, error);
+    throw error;
   }
-})
-
-// Traffic Insights
-export const getTrafficData = async (location) => {
-  const response = await api.get('/insights/traffic', {
-    params: { lat: location.lat, lon: location.lon }
-  })
-  return response.data
 }
 
-export const getBusiestHours = async (location) => {
-  const response = await api.get('/insights/busiest-hours', {
-    params: { lat: location.lat, lon: location.lon }
-  })
-  return response.data
+/**
+ * Geocode a location name to coordinates using TomTom
+ */
+export async function geocodeLocation(locationName) {
+  try {
+    // For now, return default Delhi coordinates
+    // In production, implement proper geocoding
+    const defaultLocations = {
+      'india gate': { lat: 28.6139, lon: 77.2090 },
+      'mumbai': { lat: 19.0760, lon: 72.8777 },
+      'connaught place': { lat: 28.6304, lon: 77.2177 },
+      'noida': { lat: 28.5355, lon: 77.3910 },
+    };
+
+    const normalized = locationName.toLowerCase().trim();
+    return defaultLocations[normalized] || { lat: 28.6139, lon: 77.2090 };
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return { lat: 28.6139, lon: 77.2090 }; // Default to India Gate
+  }
 }
 
-// Routes
-export const compareRoutes = async (origin, destination) => {
-  const response = await api.post('/routing/compare', {
-    origin,
-    destination
-  })
-  return response.data
+/**
+ * Compare three route types (fastest, cheapest, eco-friendly)
+ */
+export async function compareRoutes(origin, destination) {
+  return fetchAPI('/api/routing/compare', {
+    method: 'POST',
+    body: JSON.stringify({ origin, destination }),
+  });
 }
 
-// Reports
-export const generateReport = async (params) => {
-  const response = await api.post('/reports/generate', params)
-  return response.data
+/**
+ * Get fastest route
+ */
+export async function getFastestRoute(origin, destination) {
+  return fetchAPI('/api/routing/fastest', {
+    method: 'POST',
+    body: JSON.stringify({ origin, destination }),
+  });
 }
 
-export default api
+/**
+ * Get cheapest route
+ */
+export async function getCheapestRoute(origin, destination) {
+  return fetchAPI('/api/routing/cheapest', {
+    method: 'POST',
+    body: JSON.stringify({ origin, destination }),
+  });
+}
 
+/**
+ * Get eco-friendly route
+ */
+export async function getEcoRoute(origin, destination) {
+  return fetchAPI('/api/routing/eco-friendly', {
+    method: 'POST',
+    body: JSON.stringify({ origin, destination }),
+  });
+}
+
+/**
+ * Get traffic insights for a location
+ */
+export async function getTrafficInsights(lat, lon) {
+  return fetchAPI(`/api/insights/traffic?lat=${lat}&lon=${lon}`);
+}
+
+/**
+ * Get busiest hours for a location
+ */
+export async function getBusiestHours(lat, lon) {
+  return fetchAPI(`/api/insights/busiest-hours?lat=${lat}&lon=${lon}`);
+}
+
+/**
+ * Get POI analysis
+ */
+export async function getPOIAnalysis(lat, lon, radius = 5000) {
+  return fetchAPI(`/api/insights/poi-analysis?lat=${lat}&lon=${lon}&radius=${radius}`);
+}
+
+/**
+ * Get mobility patterns
+ */
+export async function getMobilityPatterns(lat, lon) {
+  return fetchAPI(`/api/insights/mobility-patterns?lat=${lat}&lon=${lon}`);
+}
+
+/**
+ * Generate PDF report
+ */
+export async function generatePDFReport(stakeholder, reportType, data) {
+  return fetchAPI('/api/reports/pdf', {
+    method: 'POST',
+    body: JSON.stringify({ stakeholder, report_type: reportType, data }),
+  });
+}
+
+/**
+ * Generate CSV report
+ */
+export async function generateCSVReport(reportType, data) {
+  return fetchAPI('/api/reports/csv', {
+    method: 'POST',
+    body: JSON.stringify({ report_type: reportType, data }),
+  });
+}
+
+/**
+ * Download a generated report
+ */
+export function downloadReport(filename) {
+  window.open(`${API_BASE_URL}/api/reports/download/${filename}`, '_blank');
+}
+
+/**
+ * List all available reports
+ */
+export async function listReports() {
+  return fetchAPI('/api/reports/list');
+}
+
+/**
+ * Health check
+ */
+export async function healthCheck() {
+  return fetchAPI('/api/health');
+}
+
+export default {
+  compareRoutes,
+  getFastestRoute,
+  getCheapestRoute,
+  getEcoRoute,
+  getTrafficInsights,
+  getBusiestHours,
+  getPOIAnalysis,
+  getMobilityPatterns,
+  generatePDFReport,
+  generateCSVReport,
+  downloadReport,
+  listReports,
+  healthCheck,
+  geocodeLocation,
+};

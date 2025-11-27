@@ -1,119 +1,88 @@
 """
-Insights API endpoints
+Insights API endpoints - FIXED VERSION
 Handles traffic insights, POI analysis, and mobility patterns
 """
 
 from flask import Blueprint, jsonify, request
 from services.traffic_api import TrafficAPI
 from services.data_processor import DataProcessor
+from utils.helpers import format_api_response, validate_coordinates
 import logging
 
 logger = logging.getLogger(__name__)
 insights_bp = Blueprint('insights', __name__)
 traffic_api = TrafficAPI()
+data_processor = DataProcessor()
 
 @insights_bp.route('/traffic', methods=['GET'])
 def get_traffic_insights():
     """
     Get traffic insights for a given location
-    
-    Query parameters:
-    - lat: latitude
-    - lon: longitude
-    - zoom: zoom level (optional, default 10)
     """
     try:
         lat = request.args.get('lat', type=float)
         lon = request.args.get('lon', type=float)
         zoom = request.args.get('zoom', default=10, type=int)
         
-        if lat is None or lon is None:
-            return jsonify({
-                'success': False,
-                'error': 'Missing required parameters: lat, lon'
-            }), 400
+        # Validate coordinates
+        valid, error = validate_coordinates(lat, lon)
+        if not valid:
+            return jsonify(format_api_response(False, error=error)), 400
         
         # Get traffic flow data
-        flow_data = traffic_api.get_traffic_flow(lat, lon, zoom)
+        flow_data = traffic_api.get_traffic_flow(lat, lon)
         
-        if not flow_data.get('success'):
-            return jsonify(flow_data), 500
+        if not flow_data:
+            return jsonify(format_api_response(False, error="Failed to fetch traffic data")), 500
         
         # Get nearby incidents
-        bbox = f"{lon-0.1},{lat-0.1},{lon+0.1},{lat+0.1}"
+        from utils.helpers import calculate_bbox
+        bbox = calculate_bbox(lat, lon, 5)  # 5km radius
         incidents = traffic_api.get_traffic_incidents(bbox)
         
-        return jsonify({
-            'success': True,
+        return jsonify(format_api_response(True, data={
             'location': {'lat': lat, 'lon': lon},
             'traffic_flow': flow_data,
-            'incidents': incidents
-        }), 200
+            'incidents': incidents,
+            'zoom_level': zoom
+        })), 200
         
     except Exception as e:
         logger.error(f"Error in get_traffic_insights: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify(format_api_response(False, error=str(e))), 500
 
 @insights_bp.route('/busiest-hours', methods=['GET'])
 def get_busiest_hours():
     """
     Get busiest hours analysis for a location
-    Analyzes traffic patterns throughout the day
-    
-    Query parameters:
-    - lat: latitude
-    - lon: longitude
     """
     try:
         lat = request.args.get('lat', type=float)
         lon = request.args.get('lon', type=float)
+        days = request.args.get('days', default=7, type=int)
         
-        if lat is None or lon is None:
-            return jsonify({
-                'success': False,
-                'error': 'Missing required parameters: lat, lon'
-            }), 400
+        # Validate coordinates
+        valid, error = validate_coordinates(lat, lon)
+        if not valid:
+            return jsonify(format_api_response(False, error=error)), 400
         
-        # Get current traffic data
-        current_traffic = traffic_api.get_traffic_flow(lat, lon)
+        # Get busiest hours analysis
+        analysis = traffic_api.get_busiest_hours_analysis(lat, lon, days)
         
-        if not current_traffic.get('success'):
-            return jsonify(current_traffic), 500
-        
-        # Generate typical hourly patterns (this would ideally use historical data)
-        busiest_hours = DataProcessor.analyze_busiest_hours(lat, lon, current_traffic)
-        
-        return jsonify({
-            'success': True,
+        return jsonify(format_api_response(True, data={
             'location': {'lat': lat, 'lon': lon},
-            'busiest_hours': busiest_hours,
-            'current_hour_status': {
-                'congestion_level': current_traffic.get('congestion_level'),
-                'current_speed': current_traffic.get('current_speed'),
-                'free_flow_speed': current_traffic.get('free_flow_speed')
-            }
-        }), 200
+            'analysis_period_days': days,
+            'analysis': analysis
+        })), 200
         
     except Exception as e:
         logger.error(f"Error in get_busiest_hours: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify(format_api_response(False, error=str(e))), 500
 
 @insights_bp.route('/poi-analysis', methods=['GET'])
 def get_poi_analysis():
     """
     Analyze Points of Interest in an area
-    
-    Query parameters:
-    - lat: latitude
-    - lon: longitude
-    - radius: search radius in meters (optional, default 5000)
-    - category: POI category filter (optional)
     """
     try:
         lat = request.args.get('lat', type=float)
@@ -121,147 +90,110 @@ def get_poi_analysis():
         radius = request.args.get('radius', default=5000, type=int)
         category = request.args.get('category', default=None, type=str)
         
-        if lat is None or lon is None:
-            return jsonify({
-                'success': False,
-                'error': 'Missing required parameters: lat, lon'
-            }), 400
+        # Validate coordinates
+        valid, error = validate_coordinates(lat, lon)
+        if not valid:
+            return jsonify(format_api_response(False, error=error)), 400
         
         # Search for POIs
-        pois = traffic_api.search_nearby_pois(lat, lon, radius, category)
-        
-        if not pois.get('success'):
-            return jsonify(pois), 500
+        pois = traffic_api.search_poi(lat, lon, radius, category)
         
         # Analyze POI distribution
-        analysis = DataProcessor.analyze_poi_distribution(pois.get('pois', []))
+        analysis = data_processor.analyze_poi_distribution(pois)
         
-        return jsonify({
-            'success': True,
+        return jsonify(format_api_response(True, data={
             'location': {'lat': lat, 'lon': lon},
             'search_radius_meters': radius,
-            'pois': pois.get('pois', []),
+            'pois_found': len(pois),
+            'pois': pois,
             'analysis': analysis
-        }), 200
+        })), 200
         
     except Exception as e:
         logger.error(f"Error in get_poi_analysis: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify(format_api_response(False, error=str(e))), 500
 
 @insights_bp.route('/mobility-patterns', methods=['GET'])
 def get_mobility_patterns():
     """
-    Get mobility patterns for an area
-    Combines traffic, POI, and incident data for comprehensive insights
-    
-    Query parameters:
-    - lat: latitude
-    - lon: longitude
+    Get comprehensive mobility patterns for an area
     """
     try:
         lat = request.args.get('lat', type=float)
         lon = request.args.get('lon', type=float)
         
-        if lat is None or lon is None:
-            return jsonify({
-                'success': False,
-                'error': 'Missing required parameters: lat, lon'
-            }), 400
+        # Validate coordinates
+        valid, error = validate_coordinates(lat, lon)
+        if not valid:
+            return jsonify(format_api_response(False, error=error)), 400
         
-        # Get traffic data
+        # Get all data for mobility analysis
         traffic_flow = traffic_api.get_traffic_flow(lat, lon)
-        
-        # Get incidents
-        bbox = f"{lon-0.1},{lat-0.1},{lon+0.1},{lat+0.1}"
+        bbox = calculate_bbox(lat, lon, 5)
         incidents = traffic_api.get_traffic_incidents(bbox)
-        
-        # Get POIs
-        pois = traffic_api.search_nearby_pois(lat, lon, 5000)
+        pois = traffic_api.search_poi(lat, lon, 2000)
         
         # Generate mobility insights
-        patterns = DataProcessor.generate_mobility_patterns(
+        patterns = data_processor.generate_mobility_patterns(
             traffic_flow, 
-            incidents.get('incidents', []),
-            pois.get('pois', [])
+            incidents,
+            pois
         )
         
-        return jsonify({
-            'success': True,
+        return jsonify(format_api_response(True, data={
             'location': {'lat': lat, 'lon': lon},
             'patterns': patterns,
-            'summary': {
-                'congestion_level': traffic_flow.get('congestion_level', 'unknown'),
-                'active_incidents': incidents.get('incident_count', 0),
-                'nearby_pois': pois.get('poi_count', 0)
+            'data_sources': {
+                'traffic_flow': bool(traffic_flow),
+                'incidents': len(incidents),
+                'pois': len(pois)
             }
-        }), 200
+        })), 200
         
     except Exception as e:
         logger.error(f"Error in get_mobility_patterns: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify(format_api_response(False, error=str(e))), 500
 
 @insights_bp.route('/area-classification', methods=['GET'])
 def get_area_classification():
     """
-    Classify an area based on its characteristics
-    Examples: "Commercial hub", "Residential quiet zone", "Entertainment district"
-    
-    Query parameters:
-    - lat: latitude
-    - lon: longitude
+    Classify urban area based on characteristics
     """
     try:
         lat = request.args.get('lat', type=float)
         lon = request.args.get('lon', type=float)
         
-        if lat is None or lon is None:
-            return jsonify({
-                'success': False,
-                'error': 'Missing required parameters: lat, lon'
-            }), 400
+        # Validate coordinates
+        valid, error = validate_coordinates(lat, lon)
+        if not valid:
+            return jsonify(format_api_response(False, error=error)), 400
         
-        # Get POIs for classification
-        pois = traffic_api.search_nearby_pois(lat, lon, 2000)
-        
-        # Get traffic data
+        # Get data for classification
+        pois = traffic_api.search_poi(lat, lon, 2000)
         traffic_flow = traffic_api.get_traffic_flow(lat, lon)
         
         # Classify the area
-        classification = DataProcessor.classify_area(
-            pois.get('pois', []),
-            traffic_flow
-        )
+        classification = data_processor.classify_area(pois, traffic_flow)
         
-        return jsonify({
-            'success': True,
+        return jsonify(format_api_response(True, data={
             'location': {'lat': lat, 'lon': lon},
             'classification': classification
-        }), 200
+        })), 200
         
     except Exception as e:
         logger.error(f"Error in get_area_classification: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify(format_api_response(False, error=str(e))), 500
 
 @insights_bp.route('/test', methods=['GET'])
 def test_insights():
-    """Test endpoint to verify insights service is working"""
-    return jsonify({
-        'success': True,
+    """Test endpoint"""
+    return jsonify(format_api_response(True, data={
         'message': 'Insights service is operational',
-        'available_endpoints': [
+        'endpoints': [
             'GET /api/insights/traffic?lat=X&lon=Y',
             'GET /api/insights/busiest-hours?lat=X&lon=Y',
             'GET /api/insights/poi-analysis?lat=X&lon=Y&radius=5000',
             'GET /api/insights/mobility-patterns?lat=X&lon=Y',
             'GET /api/insights/area-classification?lat=X&lon=Y'
         ]
-    }), 200
+    })), 200

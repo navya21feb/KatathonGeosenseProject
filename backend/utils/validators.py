@@ -71,3 +71,12 @@ def validate_bbox(bbox_str):
         return True, None
     except (TypeError, ValueError):
         return False, "Invalid bounding box format"
+    
+def validate_report_params(params):
+    required = ["start_date", "end_date", "location"]
+    missing = [p for p in required if p not in params]
+
+    if missing:
+        raise ValueError(f"Missing required parameters: {', '.join(missing)}")
+
+    return True
