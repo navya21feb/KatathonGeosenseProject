@@ -185,32 +185,46 @@ class TrafficModelTrainer:
             'test_r2': test_r2
         }
     
-    def save_model(self, output_dir='../saved_models'):
-        """Save trained model and scaler"""
-        os.makedirs(output_dir, exist_ok=True)
-        
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        model_path = os.path.join(output_dir, f'traffic_model_{timestamp}.pkl')
-        scaler_path = os.path.join(output_dir, f'scaler_{timestamp}.pkl')
-        
-        # Save model
-        joblib.dump(self.model, model_path)
-        print(f"\nModel saved to: {model_path}")
-        
-        # Save scaler
-        joblib.dump(self.scaler, scaler_path)
-        print(f"Scaler saved to: {scaler_path}")
-        
-        # Also save as default names for easy loading
-        default_model_path = os.path.join(output_dir, 'traffic_model.pkl')
-        default_scaler_path = os.path.join(output_dir, 'scaler.pkl')
-        
-        joblib.dump(self.model, default_model_path)
-        joblib.dump(self.scaler, default_scaler_path)
-        
-        print(f"Default model saved to: {default_model_path}")
-        
-        return model_path
+    def save_model(self, output_dir=None):
+        """Save trained core model + scaler safely with unique naming"""
+        import os, joblib
+        from datetime import datetime
+
+        # ml_models/training/train_model.py → go to project root
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, "../.."))
+
+        # Save inside core_models/
+        model_dir = os.path.join(PROJECT_DIR, "ml_models/saved_models/core_models")
+        if output_dir:
+            model_dir = output_dir
+
+        os.makedirs(model_dir, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Timestamped files
+        model_ts = os.path.join(model_dir, f"traffic_rf_core_{timestamp}.pkl")
+        scaler_ts = os.path.join(model_dir, f"traffic_scaler_core_{timestamp}.pkl")
+
+        # Default filenames
+        model_default = os.path.join(model_dir, "traffic_rf_core.pkl")
+        scaler_default = os.path.join(model_dir, "traffic_scaler_core.pkl")
+
+        # Save all versions
+        joblib.dump(self.model, model_ts)
+        joblib.dump(self.scaler, scaler_ts)
+        joblib.dump(self.model, model_default)
+        joblib.dump(self.scaler, scaler_default)
+
+        print("\n=== CORE MODEL SAVED ===")
+        print(model_ts)
+        print(scaler_ts)
+        print(model_default)
+        print(scaler_default)
+
+        return model_ts
+
     
     def predict_sample(self, hour, day_of_week, lat, lon):
         """Make a sample prediction"""
@@ -259,3 +273,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+
