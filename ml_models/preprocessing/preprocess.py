@@ -202,14 +202,19 @@ class TrafficDataPreprocessor:
         return df
     
     def save_processed_data(self, df, output_path):
-        """Save processed data to CSV"""
+        """Save processed data reliably to CSV (auto-creates folders)"""
         try:
-            df.to_csv(output_path, index=False)
-            print(f"\nProcessed data saved to: {output_path}")
+            abs_path = os.path.abspath(output_path)
+            os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+
+            df.to_csv(abs_path, index=False)
+            print(f"\nProcessed data saved to: {abs_path}")
             return True
+
         except Exception as e:
-            print(f"Error saving data: {e}")
+            print(f"Error saving processed data: {e}")
             return False
+
     
     def get_data_statistics(self, df):
         """Print data statistics"""
@@ -270,9 +275,11 @@ def main():
     """Main preprocessing script"""
     preprocessor = TrafficDataPreprocessor()
     
-    # Example usage
-    input_file = '../data/raw/traffic_data.csv'
-    output_file = '../data/processed/traffic_data_processed.csv'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, "../.."))
+
+    input_file = os.path.join(PROJECT_DIR, "data/raw/traffic_data.csv")
+    output_file = os.path.join(PROJECT_DIR, "data/processed/traffic_data_processed.csv")
     
     # Check if input file exists
     if not os.path.exists(input_file):
