@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { ArrowRight, Car, Shield, Zap, Route, Leaf, DollarSign, TrendingUp, Clock } from 'lucide-react'
+import heroCity from '../../hero-city.jpg'
 import './Home.css'
 
 const Home = () => {
@@ -39,9 +40,7 @@ const Home = () => {
             <h1 className="hero-title">
               <span className="gradient-text">GeoSense</span>
               <br />
-              <span className="hero-subtitle">Smart Urban</span>
-              <br />
-              <span className="gradient-text">Insights</span>
+              <span className="hero-subtitle">Smart Urban Insights</span>
             </h1>
             <p className="hero-description">
               Navigate cities smarter with AI-powered routing, real-time traffic analytics, and predictive insights. 
@@ -72,11 +71,7 @@ const Home = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="hero-map">
-              <div className="map-route-line"></div>
-              <div className="map-pin map-pin-origin"></div>
-              <div className="map-pin map-pin-destination"></div>
-            </div>
+            <img src={heroCity} alt="City skyline" className="hero-city-img" />
           </motion.div>
         </div>
       </section>
@@ -253,6 +248,9 @@ const Home = () => {
           <div className="footer-text">
             <p>GeoSense – Powered by AI for Urban Mobility</p>
             <p>2025 GeoSense. All rights reserved.</p>
+          </div>
+          <div className="built-by">
+            <p>Built by Team Polaris — members: Aparna Parashar, Navya Mishra, Sneha Patil, Puja Kukade, Muskan Surlia</p>
           </div>
         </div>
       </section>

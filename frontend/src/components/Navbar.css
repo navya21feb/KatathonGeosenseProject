@@ -10,8 +10,8 @@
 .navbar-container {
   max-width: 1400px;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 2rem;
 }
@@ -19,28 +19,48 @@
 .navbar-menu {
   display: flex;
   list-style: none;
-  gap: 0.5rem;
-  flex: 1;
+  gap: 0; /* we'll distribute spacing by flex */
+  justify-self: stretch;
   justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 760px; /* restrict max width so items remain readable */
+  padding: 0;
+}
+
+.navbar-menu > li {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .navbar-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   color: #4a5568;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem; /* slightly reduced horizontal padding for even spacing */
   border-radius: 8px;
   transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .navbar-link:hover {
   background-color: #f7fafc;
   color: #2196f3;
+}
+
+/* keep label text on a single line (prevents wrapping like "Smart\nRoutes") */
+.navbar-link span {
+  white-space: nowrap;
 }
 
 .navbar-link.active {
@@ -61,6 +81,20 @@
   color: #4a5568;
   font-size: 0.9rem;
   font-family: 'Inter', sans-serif;
+}
+
+.navbar-greeting {
+  color: #4a5568;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+/* nudge greeting slightly left so it visually sits closer to center */
+.navbar-greeting {
+  margin-right: 1rem;
 }
 
 .navbar-signin {
@@ -108,7 +142,8 @@
   }
   
   .navbar-container {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: auto;
   }
   
   .navbar-menu {

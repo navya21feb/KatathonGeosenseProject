@@ -16,6 +16,13 @@ const Navbar = () => {
     navigate('/')
   }
 
+  // derive a friendly first name for greeting
+  const rawName = user?.name || user?.email?.split('@')[0] || 'User'
+  const firstName = rawName.split(' ')[0]
+  const displayName = firstName
+    ? firstName.charAt(0).toUpperCase() + firstName.slice(1)
+    : 'User'
+
   const publicNavItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/smart-routes', label: 'Smart Routes', icon: Route },
@@ -58,10 +65,7 @@ const Navbar = () => {
         <div className="navbar-auth">
           {isAuthenticated ? (
             <>
-              <div className="navbar-user">
-                <User size={18} />
-                <span>{user?.email?.split('@')[0] || 'User'}</span>
-              </div>
+              <div className="navbar-greeting">Hi {displayName}!!</div>
               <motion.button
                 className="navbar-signout"
                 onClick={handleLogout}
