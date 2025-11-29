@@ -37,9 +37,8 @@ const Dashboard = () => {
     stats: {
       activeRoutes: 1214,
       activeRoutesChange: 12.5,
-      totalUsers: 12400,
-      totalUsersChange: 24.1,
       currentCongestion: 59,
+      modelaccuracy: 80,
       peakHour: '6-8 PM',
       peakCongestion: 95,
     },
@@ -282,9 +281,8 @@ const Dashboard = () => {
                 color: '#2196f3',
               },
               {
-                title: 'Total Users',
-                value: `${(dashboardData.stats.totalUsers / 1000).toFixed(1)}K`,
-                change: `+${dashboardData.stats.totalUsersChange}%`,
+                title: 'Model Accuracy',
+                value: `${dashboardData.stats.modelaccuracy}% +`,
                 icon: Users,
                 color: '#9c27b0',
               },

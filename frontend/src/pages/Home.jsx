@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { ArrowRight, Car, Shield, Zap, Route, Leaf, DollarSign, TrendingUp, Clock } from 'lucide-react'
+import { ArrowRight, Car, Shield, Zap, Route, Leaf, IndianRupee, TrendingUp, Clock } from 'lucide-react'
 import heroCity from '../../hero-city.jpg'
 import './Home.css'
 
@@ -143,7 +143,7 @@ const Home = () => {
                 description: 'Reduce carbon footprint with sustainable route options.',
               },
               {
-                icon: DollarSign,
+                icon: IndianRupee,
                 title: 'Cost Efficient',
                 description: 'Save money with optimal fuel consumption routes.',
               },
@@ -200,7 +200,7 @@ const Home = () => {
             {[
               { icon: Route, title: 'Fastest Route', color: '#2196f3' },
               { icon: Leaf, title: 'Eco-Friendly', color: '#4caf50' },
-              { icon: DollarSign, title: 'Cost Efficient', color: '#ff9800' },
+              { icon: IndianRupee, title: 'Cost Efficient', color: '#ff9800' },
             ].map((highlight, index) => (
               <motion.div
                 key={highlight.title}
@@ -250,7 +250,7 @@ const Home = () => {
             <p>2025 GeoSense. All rights reserved.</p>
           </div>
           <div className="built-by">
-            <p>Built by Team Polaris — members: Aparna Parashar, Navya Mishra, Sneha Patil, Puja Kukade, Muskan Surlia</p>
+            <p>Built by Team Polaris — Members: Aparna Parashar, Navya Mishra, Sneha Patil, Puja Kukade, Muskan Surlia</p>
           </div>
         </div>
       </section>

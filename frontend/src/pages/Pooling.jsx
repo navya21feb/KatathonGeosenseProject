@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { Search, DollarSign, Users, Shield, Calendar, MapPin, Car } from 'lucide-react'
+import { Search, IndianRupee,MapPin, Shield, Calendar, Car, Clock, Leaf } from 'lucide-react'
+import DriverRegistration from '../components/DriverRegistration'
 import './Pooling.css'
 
 const Pooling = () => {
@@ -11,9 +12,9 @@ const Pooling = () => {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [date, setDate] = useState('')
-  const [rides, setRides] = useState([])
+  const [searchResult, setSearchResult] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [showDriverModal, setShowDriverModal] = useState(false)
 
   const handleSearchRides = async (e) => {
     e.preventDefault()
@@ -23,45 +24,49 @@ const Pooling = () => {
       return
     }
 
-    setError('')
     setLoading(true)
+    setSearchResult(null)
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
-      const headers = getAuthHeader()
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const response = await fetch(
-        `${API_BASE_URL}/pooling/rides?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`,
-        { headers }
-      )
-
-      if (response.ok) {
-        const data = await response.json()
-        setRides(data.rides || [])
-      } else {
-        // Sample data
-        setRides([
-          {
-            id: 1,
-            driver: 'John D.',
-            time: '8:00 AM',
-            price: '$12',
-            seats: { available: 2, total: 4 },
-            rating: 4.8,
+      // Mock response - no rides found
+      setSearchResult({
+        success: true,
+        message: 'Sorry no vehicle poolers for this path',
+        route_options: {
+          fastest_route: {
+            name: 'Fastest Route',
+            description: 'Uses real-time traffic analysis to get you there quickly',
+            duration: '2 hours 15 mins',
+            distance: '145 km',
+            traffic_conditions: 'Moderate traffic expected',
+            advantages: ['Quickest arrival', 'Real-time traffic updates']
           },
-          {
-            id: 2,
-            driver: 'Sarah M.',
-            time: '9:30 AM',
-            price: '$15',
-            seats: { available: 1, total: 3 },
-            rating: 4.9,
+          cheapest_route: {
+            name: 'Cheapest Route',
+            description: 'Optimized for fuel and toll costs to save you money',
+            duration: '2 hours 45 mins',
+            distance: '138 km',
+            cost_savings: 'Save ~₹250 compared to fastest route',
+            advantages: ['Lowest cost', 'Fuel efficient']
           },
-        ])
-      }
+          eco_friendly_route: {
+            name: 'Eco-Friendly Route',
+            description: 'Designed to reduce carbon emissions and environmental impact',
+            duration: '2 hours 30 mins',
+            distance: '142 km',
+            carbon_reduction: '15% less emissions',
+            advantages: ['Environmentally friendly', 'Scenic routes']
+          }
+        }
+      })
     } catch (err) {
-      setError('Failed to search rides. Please try again.')
-      console.error('Pooling search error:', err)
+      setSearchResult({
+        success: false,
+        message: 'Failed to search rides. Please try again.'
+      })
     } finally {
       setLoading(false)
     }
@@ -72,27 +77,58 @@ const Pooling = () => {
       navigate('/signin')
       return
     }
-
-    // Handle driver registration
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
-    const headers = getAuthHeader()
-
-    fetch(`${API_BASE_URL}/pooling/driver`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert('Successfully registered as driver!')
-      })
-      .catch((err) => {
-        console.error('Driver registration error:', err)
-        alert('Registration successful! (Demo mode)')
-      })
+    setShowDriverModal(true)
   }
+
+  const handleDriverRegistrationSuccess = () => {
+    setShowDriverModal(false)
+    // You can show a success toast or message here
+  }
+
+  const RouteOptionCard = ({ route, icon: Icon, color }) => (
+    <motion.div 
+      className="route-option-card"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="route-header">
+        <Icon size={24} className="route-icon" style={{ color }} />
+        <h3>{route.name}</h3>
+      </div>
+      <p className="route-description">{route.description}</p>
+      <div className="route-details">
+        <div className="detail-item">
+          <Clock size={16} />
+          <span>{route.duration}</span>
+        </div>
+        <div className="detail-item">
+          <MapPin size={16} />
+          <span>{route.distance}</span>
+        </div>
+        {route.cost_savings && (
+          <div className="detail-item">
+            <IndianRupee size={16} />
+            <span>{route.cost_savings}</span>
+          </div>
+        )}
+        {route.carbon_reduction && (
+          <div className="detail-item">
+            <Leaf size={16} />
+            <span>{route.carbon_reduction}</span>
+          </div>
+        )}
+      </div>
+      <div className="route-advantages">
+        <h4>Advantages:</h4>
+        <ul>
+          {route.advantages.map((advantage, index) => (
+            <li key={index}>{advantage}</li>
+          ))}
+        </ul>
+      </div>
+    </motion.div>
+  )
 
   return (
     <div className="pooling-page">
@@ -161,8 +197,6 @@ const Pooling = () => {
               </div>
             </div>
 
-            {error && <div className="error-message">{error}</div>}
-
             <motion.button
               type="submit"
               className="search-rides-button"
@@ -175,36 +209,39 @@ const Pooling = () => {
             </motion.button>
           </form>
 
-          {rides.length > 0 && (
-            <div className="rides-results">
-              {rides.map((ride, index) => (
-                <motion.div
-                  key={ride.id}
-                  className="ride-card"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <div className="ride-header">
-                    <div>
-                      <h3>{ride.driver}</h3>
-                      <p className="ride-time">{ride.time}</p>
-                    </div>
-                    <div className="ride-price">{ride.price}</div>
+          {/* Search Results */}
+          {searchResult && (
+            <div className="search-results">
+              {searchResult.success ? (
+                <>
+                  <div className="no-rides-message">
+                    <h3>{searchResult.message}</h3>
+                    <p>But we found these great route options for your journey:</p>
                   </div>
-                  <div className="ride-seats">
-                    <span>Seats: {ride.seats.available}/{ride.seats.total}</span>
-                    <div className="occupancy-bar">
-                      <div
-                        className="occupancy-fill"
-                        style={{
-                          width: `${(ride.seats.available / ride.seats.total) * 100}%`,
-                        }}
-                      ></div>
-                    </div>
+                  
+                  <div className="route-options">
+                    <RouteOptionCard 
+                      route={searchResult.route_options.fastest_route}
+                      icon={Clock}
+                      color="#2196f3"
+                    />
+                    <RouteOptionCard 
+                      route={searchResult.route_options.cheapest_route}
+                      icon={IndianRupee}
+                      color="#4caf50"
+                    />
+                    <RouteOptionCard 
+                      route={searchResult.route_options.eco_friendly_route}
+                      icon={Leaf}
+                      color="#ff9800"
+                    />
                   </div>
-                </motion.div>
-              ))}
+                </>
+              ) : (
+                <div className="error-message">
+                  {searchResult.message}
+                </div>
+              )}
             </div>
           )}
         </motion.div>
@@ -213,14 +250,14 @@ const Pooling = () => {
         <div className="benefits-cards-pooling">
           {[
             {
-              icon: DollarSign,
+              icon: IndianRupee,
               title: 'Save Money',
               description: 'Split fuel costs and save up to 60% on travel expenses.',
             },
             {
-              icon: Users,
-              title: 'Meet People',
-              description: 'Connect with fellow commuters and build community.',
+              icon: MapPin,
+              title: 'Live Location Tracking',
+              description: 'Feel safe and relaxed with real-time live location tracking.',
             },
             {
               icon: Shield,
@@ -263,10 +300,16 @@ const Pooling = () => {
             Register as Driver
           </motion.button>
         </motion.div>
+
+        {/* Driver Registration Modal */}
+        <DriverRegistration 
+          isOpen={showDriverModal}
+          onClose={() => setShowDriverModal(false)}
+          onSuccess={handleDriverRegistrationSuccess}
+        />
       </div>
     </div>
   )
 }
 
 export default Pooling
-

@@ -83,3 +83,25 @@ class User(db.Document):
         'collection': 'users',
         'indexes': ['email']
     }
+
+    class Driver(db.Document):
+        user_email = db.StringField(required=True)
+        full_name = db.StringField(required=True, max_length=100)
+        dob = db.StringField(required=True)
+        phone = db.StringField(required=True, max_length=15)
+        aadhaar = db.StringField(required=True, max_length=12)
+        pan = db.StringField(required=True, max_length=10)
+        dl_number = db.StringField(required=True)
+        dl_validity = db.StringField(required=True)
+        rc_number = db.StringField(required=True)
+        vehicle_type = db.StringField(required=True)
+        vehicle_make = db.StringField(required=True)
+        vehicle_model = db.StringField(required=True)
+        vehicle_year = db.IntField(required=True)
+        status = db.StringField(default='pending', choices=['pending', 'verified', 'rejected'])
+        registration_date = db.DateTimeField(default=datetime.utcnow)
+        
+        meta = {
+            'collection': 'drivers',
+            'indexes': ['user_email', 'dl_number', 'rc_number']
+        }

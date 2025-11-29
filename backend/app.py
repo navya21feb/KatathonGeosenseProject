@@ -30,11 +30,13 @@ def create_app():
     from routes.reports import reports_bp
     from routes.routing import routing_bp
     from routes.auth import auth_bp  # Add authentication routes
-    
+    from routes.pooling import pooling_bp  # Add this line
+
     app.register_blueprint(insights_bp, url_prefix='/api/insights')
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
     app.register_blueprint(routing_bp, url_prefix='/api/routing')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')  # Register auth routes
+    app.register_blueprint(pooling_bp, url_prefix='/api/pooling')  # Add this line
     
     @app.route('/api/health')
     def health():

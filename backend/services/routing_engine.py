@@ -155,6 +155,35 @@ class RoutingEngine:
             logger.error(f"Unexpected error in eco route: {e}")
             return {'success': False, 'error': str(e)}
     
+    def get_all_routes(self, origin, destination):
+        """
+        Get all three route types for pooling page
+        Returns fastest, cheapest, and eco-friendly routes
+        """
+        try:
+            # Normalize coordinates once
+            origin_norm = self._normalize_coordinates(origin)
+            destination_norm = self._normalize_coordinates(destination)
+            
+            fastest = self.calculate_fastest_route(origin_norm, destination_norm)
+            cheapest = self.calculate_cheapest_route(origin_norm, destination_norm)
+            eco = self.calculate_eco_route(origin_norm, destination_norm)
+            
+            return {
+                'success': True,
+                'routes': {
+                    'fastest': fastest,
+                    'cheapest': cheapest,
+                    'eco_friendly': eco
+                },
+                'origin': {'lat': origin_norm[0], 'lon': origin_norm[1]},
+                'destination': {'lat': destination_norm[0], 'lon': destination_norm[1]}
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in get_all_routes: {e}")
+            return {'success': False, 'error': str(e)}
+    
     def compare_routes(self, origin, destination):
         """
         Compare all three route types
