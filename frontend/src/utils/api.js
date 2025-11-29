@@ -7,18 +7,30 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 
 /**
  * Generic fetch wrapper with error handling
+ * Supports JWT authentication via headers
  */
 async function fetchAPI(endpoint, options = {}) {
   try {
+    // Get JWT token from localStorage if available
+    const token = localStorage.getItem('geosense_token')
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     });
 
     if (!response.ok) {
+      // If unauthorized, clear token and redirect to sign in
+      if (response.status === 401) {
+        localStorage.removeItem('geosense_token')
+        localStorage.removeItem('geosense_user')
+        window.location.href = '/signin'
+      }
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
