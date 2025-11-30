@@ -173,6 +173,23 @@ export async function healthCheck() {
   return fetchAPI('/api/health');
 }
 
+/**
+ * Search for available rides
+ */
+export async function searchRides(from, to, date) {
+  return fetchAPI(`/api/pooling/rides?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`);
+}
+
+/**
+ * Register as a driver
+ */
+export async function registerDriver(driverData) {
+  return fetchAPI('/api/pooling/driver/register', {
+    method: 'POST',
+    body: JSON.stringify(driverData),
+  });
+}
+
 export default {
   compareRoutes,
   getFastestRoute,
@@ -188,4 +205,6 @@ export default {
   listReports,
   healthCheck,
   geocodeLocation,
+  searchRides,          // Add this line
+  registerDriver,
 };

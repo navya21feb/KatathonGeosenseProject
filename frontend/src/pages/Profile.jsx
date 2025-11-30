@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import ProtectedRoute from '../components/ProtectedRoute'
-import { Download, Route, TrendingUp, DollarSign } from 'lucide-react'
+import { Download, Route, TrendingUp, IndianRupee } from 'lucide-react'
 import {
   AreaChart,
   Area,
@@ -193,8 +193,8 @@ const Profile = () => {
                 <div className="stat-label-profile">Total Distance</div>
               </div>
               <div className="stat-item-profile">
-                <DollarSign size={24} className="stat-icon" />
-                <div className="stat-value-profile">${profileData.stats.totalCost.toFixed(2)}</div>
+                <IndianRupee size={24} className="stat-icon" />
+                <div className="stat-value-profile">₹{profileData.stats.totalCost.toFixed(2)}</div>
                 <div className="stat-label-profile">Total Cost</div>
               </div>
             </div>
